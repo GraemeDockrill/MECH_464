@@ -8,6 +8,8 @@ than 0.2m by setting a velocity in the opposite direction.
 
 The demo is ended by either pressing Ctrl-C or by holding your hand above the
 Crazyflie.
+
+This is a test.
 """
 import logging
 import sys
