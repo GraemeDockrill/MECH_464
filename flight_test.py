@@ -14,6 +14,7 @@ This is a test.
 import logging
 import sys
 import time
+import tkinter as tk
 
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
