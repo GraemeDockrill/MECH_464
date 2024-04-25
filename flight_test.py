@@ -68,6 +68,6 @@ if __name__ == '__main__':
                     motion_commander.start_linear_motion(
                         velocity_x, velocity_y, 0)
 
-                    time.sleep(0.1)
+                    time.sleep(0.01)
 
             print('Demo terminated!')
