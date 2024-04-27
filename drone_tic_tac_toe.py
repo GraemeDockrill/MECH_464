@@ -7,6 +7,19 @@ from serial.tools import list_ports
 import time
 import struct
 import random
+import logging
+
+# Crazyflie Libraries
+import cflib.crtp
+from cflib.crazyflie import Crazyflie
+from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from cflib.positioning.motion_commander import MotionCommander
+from cflib.utils.multiranger import Multiranger
+from cflib.utils import uri_helper
+from cflib.crazyflie.log import LogConfig
+from cflib.crazyflie.syncLogger import SyncLogger
+
+logging.basicConfig(level=logging.ERROR)
 
 class TicTacToeUI:
     def __init__(self, master):
@@ -84,6 +97,26 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
+    def get_URI_ports(self) -> None:
+        cflib.crtp.init_drivers()
+        available = cflib.crtp.scan_interfaces()
+        for i in available:
+            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
+
+    def init_drone(self) -> None:
+        # Initialize the low-level drivers (don't list the debug drivers)
+        cflib.crtp.init_drivers(enable_debug_driver=False)
+        self.cf = Crazyflie(rw_cache='./cache')
+        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+
+        self.cf.open_link("radio://0/125")
+        self.cf.close_link()
+
+
+    def close_drone(self) -> None:
+        i = 10
+
+
     # Function to handle player button press
     def btn_board_click(self, clicked_button) -> None:
 
@@ -148,6 +181,9 @@ class TicTacToeUI:
         # When drove move is selected, make the move
         """
             IMPLEMENT
+
+            This is going to be some code that I write!
+
         """
 
         # When drone reaches target, update buttons on board
