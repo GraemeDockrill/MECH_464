@@ -296,7 +296,7 @@ class TicTacToeUI:
             printWinorLose(who)
             return True
         elif(set([0,1,2,3,4,5,6,7,8]).issubset(self.played)): # board full
-            print("A draw! Thanks for playing.")
+            self.lbl_game_state.configure(text="A draw! Thanks for playing.")
             return True
         else:
             return False
