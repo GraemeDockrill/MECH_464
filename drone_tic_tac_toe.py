@@ -6,6 +6,7 @@ import serial
 from serial.tools import list_ports
 import time
 import struct
+import random
 
 class TicTacToeUI:
     def __init__(self, master):
@@ -20,8 +21,12 @@ class TicTacToeUI:
         self.COM_connected = False
 
         # Define some variables
-        self.num_rows = 6
+        self.num_rows = 7
         self.num_columns = 3
+
+        # Custom font
+        self.custom_button_font = ("Helvetica", 50, "bold")
+        self.custom_label_font = ("Helvetica", 30, "bold")
 
         # Tic Tac Toe Variables
         self.played = set()    # A set to keep track of the played cells
@@ -34,28 +39,32 @@ class TicTacToeUI:
     # Creates UI for Tic Tac Toe
     def create_ui(self):
         # Create Tic Tac Toe board buttons
-        self.btn_board_1 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(1))
-        self.btn_board_1.grid(row=3, column=0, sticky="nsew")
-        self.btn_board_2 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(2))
-        self.btn_board_2.grid(row=3, column=1, sticky="nsew")
-        self.btn_board_3 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(3))
-        self.btn_board_3.grid(row=3, column=2, sticky="nsew")
-        self.btn_board_4 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(4))
-        self.btn_board_4.grid(row=4, column=0, sticky="nsew")
-        self.btn_board_5 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(5))
-        self.btn_board_5.grid(row=4, column=1, sticky="nsew")
-        self.btn_board_6 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(6))
-        self.btn_board_6.grid(row=4, column=2, sticky="nsew")
-        self.btn_board_7 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(7))
-        self.btn_board_7.grid(row=5, column=0, sticky="nsew")
-        self.btn_board_8 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(8))
-        self.btn_board_8.grid(row=5, column=1, sticky="nsew")
-        self.btn_board_9 = tk.Button(self.master, text="-", bg="grey", command=lambda: self.btn_board_click(9))
-        self.btn_board_9.grid(row=5, column=2, sticky="nsew")
+        self.btn_board_0 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(0))
+        self.btn_board_0.grid(row=4, column=0, sticky="nsew")
+        self.btn_board_1 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(1))
+        self.btn_board_1.grid(row=4, column=1, sticky="nsew")
+        self.btn_board_2 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(2))
+        self.btn_board_2.grid(row=4, column=2, sticky="nsew")
+        self.btn_board_3 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(3))
+        self.btn_board_3.grid(row=5, column=0, sticky="nsew")
+        self.btn_board_4 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(4))
+        self.btn_board_4.grid(row=5, column=1, sticky="nsew")
+        self.btn_board_5 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(5))
+        self.btn_board_5.grid(row=5, column=2, sticky="nsew")
+        self.btn_board_6 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(6))
+        self.btn_board_6.grid(row=6, column=0, sticky="nsew")
+        self.btn_board_7 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(7))
+        self.btn_board_7.grid(row=6, column=1, sticky="nsew")
+        self.btn_board_9 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(8))
+        self.btn_board_9.grid(row=6, column=2, sticky="nsew")
 
         # Create label for game
-        self.lbl_title = tk.Label(self.master, text="Drone Tic Tac Toe")
+        self.lbl_title = tk.Label(self.master, font=self.custom_button_font, text="Drone Tic Tac Toe")
         self.lbl_title.grid(row=0, column=0, columnspan=3, sticky="nsew")
+
+        # Create label for game status
+        self.lbl_game_state = tk.Label(self.master, font=self.custom_label_font, text="Current State")
+        self.lbl_game_state.grid(row=3, column=0, columnspan=3, sticky="nsew")
 
         # Create COM connect button
         self.btn_connect = tk.Button(root, text="Connect", command=self.btn_connect_click)
@@ -75,28 +84,163 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
-    # Function to handle valid button press
+    # Function to handle player button press
     def btn_board_click(self, clicked_button) -> None:
 
+        # Add clicked button to played list
+        self.played.add(clicked_button)
+        self.board[clicked_button] = "O" 
+
         # Check  which button was clicked and change it's color accordingly
+        if clicked_button == 0:
+            self.btn_board_0.configure(text="O", bg="green", state="disabled")
         if clicked_button == 1:
-            self.btn_board_1.configure(bg="red", state="disabled")
+            self.btn_board_1.configure(text="O", bg="green", state="disabled")
         if clicked_button == 2:
-            self.btn_board_2.configure(bg="red", state="disabled")
+            self.btn_board_2.configure(text="O", bg="green", state="disabled")
         if clicked_button == 3:
-            self.btn_board_3.configure(bg="red", state="disabled")
+            self.btn_board_3.configure(text="O", bg="green", state="disabled")
         if clicked_button == 4:
-            self.btn_board_4.configure(bg="red", state="disabled")
+            self.btn_board_4.configure(text="O", bg="green", state="disabled")
         if clicked_button == 5:
-            self.btn_board_5.configure(bg="red", state="disabled")
+            self.btn_board_5.configure(text="O", bg="green", state="disabled")
         if clicked_button == 6:
-            self.btn_board_6.configure(bg="red", state="disabled")
+            self.btn_board_6.configure(text="O", bg="green", state="disabled")
         if clicked_button == 7:
-            self.btn_board_7.configure(bg="red", state="disabled")
+            self.btn_board_7.configure(text="O", bg="green", state="disabled")
         if clicked_button == 8:
-            self.btn_board_8.configure(bg="red", state="disabled")
-        if clicked_button == 9:
-            self.btn_board_9.configure(bg="red", state="disabled")
+            self.btn_board_9.configure(text="O", bg="green", state="disabled")
+
+        # Check if player has won
+        """
+            IMPLEMENT
+        """
+
+
+        # Call drone to make its move
+        self.computerNextMove()
+
+    # Function to handle the drone's move and to update the board when the drone move is done
+    def computerNextMove(self) -> None:
+
+        # Disable all buttons when this is happening
+        self.btn_board_0.configure(state="disabled")
+        self.btn_board_1.configure(state="disabled")
+        self.btn_board_2.configure(state="disabled")
+        self.btn_board_3.configure(state="disabled")
+        self.btn_board_4.configure(state="disabled")
+        self.btn_board_5.configure(state="disabled")
+        self.btn_board_6.configure(state="disabled")
+        self.btn_board_7.configure(state="disabled")
+        self.btn_board_9.configure(state="disabled")
+
+
+        computer_move = random.randint(0, 8) # generate computer move
+
+        # if computer_move space is played, generate another
+        while(computer_move in self.played):
+            computer_move = random.randint(0, 8)
+
+        # Add drone move
+        self.played.add(computer_move)
+        self.board[computer_move] = "X"
+
+        # When drove move is selected, make the move
+        """
+            IMPLEMENT
+        """
+
+        # When drone reaches target, update buttons on board
+        if computer_move == 0:
+            self.btn_board_0.configure(bg="red", text="X")
+        if computer_move == 1:
+            self.btn_board_1.configure(bg="red", text="X")
+        if computer_move == 2:
+            self.btn_board_2.configure(bg="red", text="X")
+        if computer_move == 3:
+            self.btn_board_3.configure(bg="red", text="X")
+        if computer_move == 4:
+            self.btn_board_4.configure(bg="red", text="X")
+        if computer_move == 5:
+            self.btn_board_5.configure(bg="red", text="X")
+        if computer_move == 6:
+            self.btn_board_6.configure(bg="red", text="X")
+        if computer_move == 7:
+            self.btn_board_7.configure(bg="red", text="X")
+        if computer_move == 8:
+            self.btn_board_9.configure(bg="red", text="X")
+
+        # Check if drone has won the game
+        """
+            IMPLEMENT
+        """
+
+        # Otherwise reenable the not selected buttons
+        if 1 not in self.played:
+            self.btn_board_0.configure(state="active")
+        if 2 not in self.played:
+            self.btn_board_1.configure(state="active")
+        if 3 not in self.played:
+            self.btn_board_2.configure(state="active")
+        if 4 not in self.played:
+            self.btn_board_3.configure(state="active")
+        if 5 not in self.played:
+            self.btn_board_4.configure(state="active")
+        if 6 not in self.played:
+            self.btn_board_5.configure(state="active")
+        if 7 not in self.played:
+            self.btn_board_6.configure(state="active")
+        if 8 not in self.played:
+            self.btn_board_7.configure(state="active")
+        if 9 not in self.played:
+            self.btn_board_9.configure(state="active")
+
+    # 
+    def terminate(self, who: str) -> bool:
+        """ returns True if who (being passed 'X' or 'O') has won or if it's a draw, False otherwise;
+            it also prints the final messages:
+                    "You won! Thanks for playing." or 
+                    "You lost! Thanks for playing." or 
+                    "A draw! Thanks for playing."  
+        """
+
+        # inner function to display text for winning or losing
+        def printWinorLose(who: str):
+            if(who == "X"):
+                print("You won! Thanks for playing.")
+            else:
+                print("You lost! Thanks for playing.")
+        
+        # check all win cases, then print who won, else continue
+        if(who == self.board[0] == self.board[1] == self.board[2]): # top row
+            printWinorLose(who)
+            return True
+        elif(who == self.board[3] == self.board[4] == self.board[5]): # middle row
+            printWinorLose(who)
+            return True
+        elif(who == self.board[6] == self.board[7] == self.board[8]): # bottom row
+            printWinorLose(who)
+            return True
+        elif(who == self.board[0] == self.board[3] == self.board[6]): # left column
+            printWinorLose(who)
+            return True
+        elif(who == self.board[1] == self.board[4] == self.board[7]): # middle column
+            printWinorLose(who)
+            return True
+        elif(who == self.board[2] == self.board[5] == self.board[8]): # right column
+            printWinorLose(who)
+            return True
+        elif(who == self.board[0] == self.board[4] == self.board[8]): # top left diagonal column
+            printWinorLose(who)
+            return True
+        elif(who == self.board[2] == self.board[4] == self.board[6]): # top right diagonal column
+            printWinorLose(who)
+            return True
+        elif(set([0,1,2,3,4,5,6,7,8]).issubset(self.played)): # board full
+            print("A draw! Thanks for playing.")
+            return True
+        else:
+            return False
 
     # Refreshes available COM ports
     def refresh_ports(self, event=None):
