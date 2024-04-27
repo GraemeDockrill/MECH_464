@@ -21,7 +21,7 @@ class TicTacToeUI:
         self.COM_connected = False
 
         # Define some variables
-        self.num_rows = 7
+        self.num_rows = 8
         self.num_columns = 3
 
         # Custom font
@@ -39,31 +39,35 @@ class TicTacToeUI:
     # Creates UI for Tic Tac Toe
     def create_ui(self):
         # Create Tic Tac Toe board buttons
-        self.btn_board_0 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(0))
+        self.btn_board_0 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(0))
         self.btn_board_0.grid(row=4, column=0, sticky="nsew")
-        self.btn_board_1 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(1))
+        self.btn_board_1 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(1))
         self.btn_board_1.grid(row=4, column=1, sticky="nsew")
-        self.btn_board_2 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(2))
+        self.btn_board_2 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(2))
         self.btn_board_2.grid(row=4, column=2, sticky="nsew")
-        self.btn_board_3 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(3))
+        self.btn_board_3 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(3))
         self.btn_board_3.grid(row=5, column=0, sticky="nsew")
-        self.btn_board_4 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(4))
+        self.btn_board_4 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(4))
         self.btn_board_4.grid(row=5, column=1, sticky="nsew")
-        self.btn_board_5 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(5))
+        self.btn_board_5 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(5))
         self.btn_board_5.grid(row=5, column=2, sticky="nsew")
-        self.btn_board_6 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(6))
+        self.btn_board_6 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(6))
         self.btn_board_6.grid(row=6, column=0, sticky="nsew")
-        self.btn_board_7 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(7))
+        self.btn_board_7 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(7))
         self.btn_board_7.grid(row=6, column=1, sticky="nsew")
-        self.btn_board_9 = tk.Button(self.master, text="-", bg="grey", font=self.custom_button_font, command=lambda: self.btn_board_click(8))
-        self.btn_board_9.grid(row=6, column=2, sticky="nsew")
+        self.btn_board_8 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(8))
+        self.btn_board_8.grid(row=6, column=2, sticky="nsew")
+
+        # Create button for restarting
+        self.btn_restart_game = tk.Button(self.master, text="Restart Game", state="disabled", font=self.custom_label_font, command=lambda: self.restart_game())
+        self.btn_restart_game.grid(row=7, column=0, columnspan=3, sticky="nsew")
 
         # Create label for game
         self.lbl_title = tk.Label(self.master, font=self.custom_button_font, text="Drone Tic Tac Toe")
         self.lbl_title.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         # Create label for game status
-        self.lbl_game_state = tk.Label(self.master, font=self.custom_label_font, text="Current State")
+        self.lbl_game_state = tk.Label(self.master, font=self.custom_label_font, text="Make your move")
         self.lbl_game_state.grid(row=3, column=0, columnspan=3, sticky="nsew")
 
         # Create COM connect button
@@ -84,37 +88,74 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
+    # Function for restarting the game when it's complete
+    def restart_game(self) -> None:
+
+        # Clear the played set and reset the board
+        self.played.clear()
+        for i in range(9):
+            self.board[i] = " "
+
+        # Disable the restart button
+        self.btn_restart_game.configure(state="disabled")
+
+        # Reenable board buttons
+        self.btn_board_0.configure(text="-", state="active")
+        self.btn_board_1.configure(text="-", state="active")
+        self.btn_board_2.configure(text="-", state="active")
+        self.btn_board_3.configure(text="-", state="active")
+        self.btn_board_4.configure(text="-", state="active")
+        self.btn_board_5.configure(text="-", state="active")
+        self.btn_board_6.configure(text="-", state="active")
+        self.btn_board_7.configure(text="-", state="active")
+        self.btn_board_8.configure(text="-", state="active")
+
+        self.lbl_game_state.configure(text="Make your move")
+
     # Function to handle player button press
     def btn_board_click(self, clicked_button) -> None:
 
         # Add clicked button to played list
         self.played.add(clicked_button)
-        self.board[clicked_button] = "O" 
+        self.board[clicked_button] = "O"
+
+        print(clicked_button)
 
         # Check  which button was clicked and change it's color accordingly
         if clicked_button == 0:
-            self.btn_board_0.configure(text="O", bg="green", state="disabled")
+            self.btn_board_0.configure(text="O", state="disabled")
         if clicked_button == 1:
-            self.btn_board_1.configure(text="O", bg="green", state="disabled")
+            self.btn_board_1.configure(text="O", state="disabled")
         if clicked_button == 2:
-            self.btn_board_2.configure(text="O", bg="green", state="disabled")
+            self.btn_board_2.configure(text="O", state="disabled")
         if clicked_button == 3:
-            self.btn_board_3.configure(text="O", bg="green", state="disabled")
+            self.btn_board_3.configure(text="O", state="disabled")
         if clicked_button == 4:
-            self.btn_board_4.configure(text="O", bg="green", state="disabled")
+            self.btn_board_4.configure(text="O", state="disabled")
         if clicked_button == 5:
-            self.btn_board_5.configure(text="O", bg="green", state="disabled")
+            self.btn_board_5.configure(text="O", state="disabled")
         if clicked_button == 6:
-            self.btn_board_6.configure(text="O", bg="green", state="disabled")
+            self.btn_board_6.configure(text="O", state="disabled")
         if clicked_button == 7:
-            self.btn_board_7.configure(text="O", bg="green", state="disabled")
+            self.btn_board_7.configure(text="O", state="disabled")
         if clicked_button == 8:
-            self.btn_board_9.configure(text="O", bg="green", state="disabled")
+            self.btn_board_8.configure(text="O", state="disabled")
 
         # Check if player has won
-        """
-            IMPLEMENT
-        """
+        if self.terminate("O"):
+            # Disable all buttons
+            self.btn_board_0.configure(state="disabled")
+            self.btn_board_1.configure(state="disabled")
+            self.btn_board_2.configure(state="disabled")
+            self.btn_board_3.configure(state="disabled")
+            self.btn_board_4.configure(state="disabled")
+            self.btn_board_5.configure(state="disabled")
+            self.btn_board_6.configure(state="disabled")
+            self.btn_board_7.configure(state="disabled")
+            self.btn_board_8.configure(state="disabled")
+            # Enable restart button
+            self.btn_restart_game.configure(state="active")
+            return
 
 
         # Call drone to make its move
@@ -122,6 +163,8 @@ class TicTacToeUI:
 
     # Function to handle the drone's move and to update the board when the drone move is done
     def computerNextMove(self) -> None:
+
+        self.lbl_game_state.configure(text="Drone making a move")
 
         # Disable all buttons when this is happening
         self.btn_board_0.configure(state="disabled")
@@ -132,7 +175,7 @@ class TicTacToeUI:
         self.btn_board_5.configure(state="disabled")
         self.btn_board_6.configure(state="disabled")
         self.btn_board_7.configure(state="disabled")
-        self.btn_board_9.configure(state="disabled")
+        self.btn_board_8.configure(state="disabled")
 
 
         computer_move = random.randint(0, 8) # generate computer move
@@ -140,6 +183,8 @@ class TicTacToeUI:
         # if computer_move space is played, generate another
         while(computer_move in self.played):
             computer_move = random.randint(0, 8)
+
+        print(computer_move)
 
         # Add drone move
         self.played.add(computer_move)
@@ -152,48 +197,62 @@ class TicTacToeUI:
 
         # When drone reaches target, update buttons on board
         if computer_move == 0:
-            self.btn_board_0.configure(bg="red", text="X")
+            self.btn_board_0.configure(text="X")
         if computer_move == 1:
-            self.btn_board_1.configure(bg="red", text="X")
+            self.btn_board_1.configure(text="X")
         if computer_move == 2:
-            self.btn_board_2.configure(bg="red", text="X")
+            self.btn_board_2.configure(text="X")
         if computer_move == 3:
-            self.btn_board_3.configure(bg="red", text="X")
+            self.btn_board_3.configure(text="X")
         if computer_move == 4:
-            self.btn_board_4.configure(bg="red", text="X")
+            self.btn_board_4.configure(text="X")
         if computer_move == 5:
-            self.btn_board_5.configure(bg="red", text="X")
+            self.btn_board_5.configure(text="X")
         if computer_move == 6:
-            self.btn_board_6.configure(bg="red", text="X")
+            self.btn_board_6.configure(text="X")
         if computer_move == 7:
-            self.btn_board_7.configure(bg="red", text="X")
+            self.btn_board_7.configure(text="X")
         if computer_move == 8:
-            self.btn_board_9.configure(bg="red", text="X")
+            self.btn_board_8.configure(text="X")
 
         # Check if drone has won the game
-        """
-            IMPLEMENT
-        """
+        if self.terminate("X"):
+            # Disable all buttons
+            self.btn_board_0.configure(state="disabled")
+            self.btn_board_1.configure(state="disabled")
+            self.btn_board_2.configure(state="disabled")
+            self.btn_board_3.configure(state="disabled")
+            self.btn_board_4.configure(state="disabled")
+            self.btn_board_5.configure(state="disabled")
+            self.btn_board_6.configure(state="disabled")
+            self.btn_board_7.configure(state="disabled")
+            self.btn_board_8.configure(state="disabled")
+            # Enable restart button
+            self.btn_restart_game.configure(state="active")
+            return
 
-        # Otherwise reenable the not selected buttons
-        if 1 not in self.played:
+
+        # Otherwise reenable the available selected buttons
+        if 0 not in self.played:
             self.btn_board_0.configure(state="active")
-        if 2 not in self.played:
+        if 1 not in self.played:
             self.btn_board_1.configure(state="active")
-        if 3 not in self.played:
+        if 2 not in self.played:
             self.btn_board_2.configure(state="active")
-        if 4 not in self.played:
+        if 3 not in self.played:
             self.btn_board_3.configure(state="active")
-        if 5 not in self.played:
+        if 4 not in self.played:
             self.btn_board_4.configure(state="active")
-        if 6 not in self.played:
+        if 5 not in self.played:
             self.btn_board_5.configure(state="active")
-        if 7 not in self.played:
+        if 6 not in self.played:
             self.btn_board_6.configure(state="active")
-        if 8 not in self.played:
+        if 7 not in self.played:
             self.btn_board_7.configure(state="active")
-        if 9 not in self.played:
-            self.btn_board_9.configure(state="active")
+        if 8 not in self.played:
+            self.btn_board_8.configure(state="active")
+
+        self.lbl_game_state.configure(text="Make your move")
 
     # 
     def terminate(self, who: str) -> bool:
@@ -206,10 +265,10 @@ class TicTacToeUI:
 
         # inner function to display text for winning or losing
         def printWinorLose(who: str):
-            if(who == "X"):
-                print("You won! Thanks for playing.")
+            if(who == "O"):
+                self.lbl_game_state.configure(text="You won! Thanks for playing.")
             else:
-                print("You lost! Thanks for playing.")
+                self.lbl_game_state.configure(text="You lost! Thanks for playing.")
         
         # check all win cases, then print who won, else continue
         if(who == self.board[0] == self.board[1] == self.board[2]): # top row
