@@ -47,6 +47,8 @@ class TicTacToeUI:
         self.played = set()    # A set to keep track of the played cells
         self.board = [' '] * 9 # A list of 9 strings, one for each cell, 
                   # will contain ' ' or 'X' or 'O'
+        self.game_end_blink_delay = 0.2
+        self.game_end_blink_times = 4
 
         # Create UI for game
         self.create_ui()
@@ -103,11 +105,11 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
-    def get_URI_ports(self) -> None:
-        cflib.crtp.init_drivers()
-        available = cflib.crtp.scan_interfaces()
-        for i in available:
-            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
+    # def get_URI_ports(self) -> None:
+    #     cflib.crtp.init_drivers()
+    #     available = cflib.crtp.scan_interfaces()
+    #     for i in available:
+    #         print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
 
     def init_drone(self) -> None:
         # Initialize the low-level drivers (don't list the debug drivers)
@@ -117,6 +119,14 @@ class TicTacToeUI:
         self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
         
         self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
+    # def init_drone(self) -> None:
+    #     # Initialize the low-level drivers (don't list the debug drivers)
+    #     cflib.crtp.init_drivers(enable_debug_driver=False)
+    #     self.cf = Crazyflie(rw_cache='./cache')
+    #     self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+
+    #     self.cf.open_link("radio://0/125")
+    #     self.cf.close_link()
 
             
 
@@ -124,6 +134,8 @@ class TicTacToeUI:
         self.cf.close_link()
 
     
+    # def close_drone(self) -> None:
+    #     i = 10
 
     # Function for restarting the game when it's complete
     def restart_game(self) -> None:
@@ -132,6 +144,9 @@ class TicTacToeUI:
         self.played.clear()
         for i in range(9):
             self.board[i] = " "
+
+        # Reset LEDs on board
+        self.write_to_serial(9, 1)
 
         # Disable the restart button
         self.btn_restart_game.configure(state="disabled")
@@ -178,6 +193,15 @@ class TicTacToeUI:
         if clicked_button == 8:
             self.btn_board_8.configure(text="O", state="disabled")
 
+        # Handle 3 and 5 being switched on the board
+        if (clicked_button == 3):
+            clicked_button = 5
+        elif (clicked_button == 5):
+            clicked_button = 3
+
+        # Activate LED on board
+        self.write_to_serial(clicked_button, 0)
+
         # Check if player has won
         if self.terminate("O"):
             # Disable all buttons
@@ -193,7 +217,6 @@ class TicTacToeUI:
             # Enable restart button
             self.btn_restart_game.configure(state="active")
             return
-
 
         # Call drone to make its move
         self.computerNextMove()
@@ -255,6 +278,15 @@ class TicTacToeUI:
         if computer_move == 8:
             self.btn_board_8.configure(text="X")
 
+        # Handle 3 and 5 being switched on the board
+        if (computer_move == 3):
+            computer_move = 5
+        elif (computer_move == 5):
+            computer_move = 3
+
+        # Activate LED on board
+        self.write_to_serial(computer_move, 1)
+
         # Check if drone has won the game
         if self.terminate("X"):
             # Disable all buttons
@@ -309,31 +341,73 @@ class TicTacToeUI:
                 self.lbl_game_state.configure(text="You won! Thanks for playing.")
             else:
                 self.lbl_game_state.configure(text="You lost! Thanks for playing.")
+
+        # inner function to blink the LEDs
+        def blink_leds(LED1, LED2, LED3, colour):
+            for i in range(self.game_end_blink_times):
+                    self.write_to_serial(9, 0)
+                    time.sleep(self.game_end_blink_delay)
+                    self.write_to_serial(LED1, colour)
+                    self.write_to_serial(LED2, colour)
+                    self.write_to_serial(LED3, colour)
+                    time.sleep(self.game_end_blink_delay)
         
         # check all win cases, then print who won, else continue
         if(who == self.board[0] == self.board[1] == self.board[2]): # top row
             printWinorLose(who)
+            if self.board[0] == "O":
+                blink_leds(0, 1, 2, 0)
+            elif self.board[0] == "X":
+                blink_leds(0, 1, 2, 1)
             return True
         elif(who == self.board[3] == self.board[4] == self.board[5]): # middle row
             printWinorLose(who)
+            if self.board[3] == "O":
+                blink_leds(5, 4, 3, 0)
+            elif self.board[3] == "X":
+                blink_leds(5, 4, 3, 1)
             return True
         elif(who == self.board[6] == self.board[7] == self.board[8]): # bottom row
             printWinorLose(who)
+            if self.board[6] == "O":
+                blink_leds(6, 7, 8, 0)
+            elif self.board[6] == "X":
+                blink_leds(6, 7, 8, 1)
             return True
         elif(who == self.board[0] == self.board[3] == self.board[6]): # left column
             printWinorLose(who)
+            if self.board[0] == "O":
+                blink_leds(0, 5, 6, 0)
+            elif self.board[0] == "X":
+                blink_leds(0, 5, 6, 1)
             return True
         elif(who == self.board[1] == self.board[4] == self.board[7]): # middle column
             printWinorLose(who)
+            if self.board[1] == "O":
+                blink_leds(1, 4, 7, 0)
+            elif self.board[1] == "X":
+                blink_leds(1, 4, 7, 1)
             return True
         elif(who == self.board[2] == self.board[5] == self.board[8]): # right column
             printWinorLose(who)
+            if self.board[2] == "O":
+                blink_leds(2, 3, 8, 0)
+            elif self.board[2] == "X":
+                blink_leds(2, 3, 8, 1)
             return True
         elif(who == self.board[0] == self.board[4] == self.board[8]): # top left diagonal column
             printWinorLose(who)
+            if self.board[0] == "O":
+                blink_leds(0, 4, 8, 0)
+            elif self.board[0] == "X":
+                blink_leds(0, 4, 8, 1)
             return True
         elif(who == self.board[2] == self.board[4] == self.board[6]): # top right diagonal column
             printWinorLose(who)
+            if self.board[2] == "O":
+                blink_leds(2, 4, 6, 0)
+            elif self.board[2] == "X":
+                blink_leds(2, 4, 6, 1)
             return True
         elif(set([0,1,2,3,4,5,6,7,8]).issubset(self.played)): # board full
             self.lbl_game_state.configure(text="A draw! Thanks for playing.")
@@ -355,7 +429,6 @@ class TicTacToeUI:
         # First check if we're already connected
         if self.COM_connected:
             try:
-                self.serial_port_thread.close()
                 self.btn_connect.config(text="Connect")
                 self.COM_connected = False
                 self.serial_port.close()
@@ -367,10 +440,12 @@ class TicTacToeUI:
             try:
                 self.serial_port_option = self.selected_port.get()
                 self.serial_port = serial.Serial(self.serial_port_option, self.baud_rate)
-                # time.sleep(0.1)
-                if self.serial_port_thread.isOpen():
+                time.sleep(0.1)
+                if self.serial_port.is_open:
                     self.btn_connect.config(text="Disconnect")
                     self.COM_connected = True
+                    # Reset LEDs on board
+                    self.write_to_serial(9, 1)
             except Exception as e:
                 print("Error opening serial port!")
                 print(e)
@@ -380,11 +455,23 @@ class TicTacToeUI:
         return self.serial_port.is_open
     
     # Writing to serial port
-    def write_to_serial(self, COM_message):
+    def write_to_serial(self, square, colour):
+
+        # First 4 bits are for the color
+        COM_byte = 0b00000000
+        COM_byte += square
+
+        if colour == 0:
+            COM_byte = COM_byte | 0b00000000
+        else:
+            COM_byte = COM_byte | 0b10000000
+
+
         if self.isOpen:
             try:
-                print("Wrote " + str(COM_message) + " to serial port!")
-                self.serial_port.write(COM_message)     # Write byte array to serial
+                # COM_byte = struct.pack('B', command)
+                print("Wrote " + str(int.to_bytes(COM_byte, 1, "little")) + " to serial port!")
+                self.serial_port.write(int.to_bytes(COM_byte, 1, "little"))     # Write byte array to serial
             except Exception as e:
                 print("Error writing to serial port!")
                 print(e)
@@ -392,55 +479,6 @@ class TicTacToeUI:
     # Event on port being selected
     def on_port_selected(self, *args):
         print("Selected port:", self.selected_port.get())
-
-    # Function to create byte packet with 1 start, 1 command, 4 data, 1 esc
-    def create_message(self, command, data1, data2) -> bytearray:
-        try:
-            start_byte = 255
-            start_byte = struct.pack('B', start_byte)       # Convert int into byte
-            
-            command_byte = struct.pack('B', command)       # Convert int into byte
-
-            if data1 >= 65535:
-                data1 = 65535
-            data1_bytes = struct.pack('>H', data1)        # Pack into byte
-            data1_bytes = bytearray(data1_bytes)
-
-            if data2 >= 65535:
-                data2 = 65535
-            data2_bytes = struct.pack('>H', data2)        # Pack into byte
-            data2_bytes = bytearray(data2_bytes)
-
-            # Handle if escape byte is necessary
-            esc_byte = 0
-
-            if data1_bytes[0] >= 255:
-                data1_bytes[0] = 0
-                print("data1[0] >= 255")
-                esc_byte |= 1 << 3
-            if data1_bytes[1] >= 255:
-                data1_bytes[1] = 0
-                print("data1[1] >= 255")
-                esc_byte |= 1 << 2
-            if data2_bytes[0] >= 255:
-                data2_bytes[0] = 0
-                print("data2[0] >= 255")
-                esc_byte |= 1 << 1
-            if data2_bytes[1] >= 255:
-                data2_bytes[1] = 0
-                print("data2[1] >= 255")
-                esc_byte |= 1 << 0
-
-            print("Parsed message as: 255, " + str(command) + ", " + str(data1) + ", " + str(data2) + ", " + str(esc_byte))
-
-            esc_byte = struct.pack('B', esc_byte)
-
-            message = start_byte + command_byte + data1_bytes + data2_bytes + esc_byte
-
-            return message
-        except Exception as e:
-            print("Problem creating message!")
-            print(e)
 
     # Function run when window closed
     def close_program(self):
