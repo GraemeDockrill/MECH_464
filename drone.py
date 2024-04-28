@@ -24,19 +24,19 @@ class drone_thread_class(threading.Thread):
             # Initialize the low-level drivers (don't list the debug drivers)
             cflib.crtp.init_drivers(enable_debug_driver=False)
             self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+            self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
 
-            with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as self.scf:
-                self.init_drone_board()
+            self.init_drone_board()
         except:
             print("Failed to connect to CrazyFlie")
 
     def run(self):
             self.run_state = True
-            with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
-                with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
-                    while self.run_states:
-                        pc.go_to(self.x_position, self.y_position, self.z_position, 0.25)
-                        time.sleep(0.5)
+            with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
+                while self.run_states:
+                    pc.go_to(self.x_position, self.y_position, self.z_position, 0.25)
+                    self.log_position()
+                    time.sleep(0.5)
   
     def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
@@ -58,14 +58,12 @@ class drone_thread_class(threading.Thread):
                     time.sleep(1)
             print("")
 
-            # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
-            # [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
 
             self.log_position()
-            self.x_position = self.data[-1]['kalman.varPX']
-            self.y_position = self.data[-1]['kalman.varPY']
-            self.z_position = self.data[-1]['kalman.varPZ']
+            self.x_position = self.data[-1]['stateEstimate.x']
+            self.y_position = self.data[-1]['stateEstimate.y']
+            self.z_position = self.data[-1]['stateEstimate.z']
 
             print(self.x_position + ", " + self.y_position + ", " + self.z_position)
             self.z_position = Z_HEIGHT
@@ -82,9 +80,9 @@ class drone_thread_class(threading.Thread):
         cf.param.set_value('kalman.resetEstimation', '0')
 
         log_config = LogConfig(name='Kalman Variance', period_in_ms=500)
-        log_config.add_variable('kalman.varPX', 'float')
-        log_config.add_variable('kalman.varPY', 'float')
-        log_config.add_variable('kalman.varPZ', 'float')
+        log_config.add_variable('stateEstimate.x', 'float')
+        log_config.add_variable('stateEstimate.y', 'float')
+        log_config.add_variable('stateEstimate.z', 'float')
 
         with SyncLogger(self,log_config) as logger:
             for log_entry in logger:
@@ -114,9 +112,9 @@ class drone_thread_class(threading.Thread):
     def return_reached_position(self, index):
         threshold = 0.05
         self.log_position()
-        self.x_position = self.data[-1]['kalman.varPX']
-        self.y_position = self.data[-1]['kalman.varPY']
-        self.z_position = self.data[-1]['kalman.varPZ']
+        self.x_position = self.data[-1]['stateEstimate.x']
+        self.y_position = self.data[-1]['stateEstimate.x']
+        self.z_position = self.data[-1]['stateEstimate.x']
 
         if (abs(self.x_position - self.drone_board[index].first) < threshold) and (abs(self.y_position - self.drone_board[index].second) < threshold):
             return True
