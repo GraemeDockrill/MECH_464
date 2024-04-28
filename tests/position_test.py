@@ -1,7 +1,5 @@
 import time
 
-import matplotlib.pyplot as plt
-
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
@@ -14,11 +12,11 @@ uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 def matrix_print(cf, pc):
     time.sleep(3)
 
-    pc.go_to(0,0.1,0.4)
+    pc.go_to(0,0.1,0.15)
     time.sleep(3)
-    pc.go_to(0,0.2,0.4)
+    pc.go_to(0,0.2,0.15)
     time.sleep(3)
-    pc.go_to(0,0.1,0.2)
+    pc.go_to(0,0.1,0.15)
 
 
 if __name__ == '__main__':

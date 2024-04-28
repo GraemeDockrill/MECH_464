@@ -1,6 +1,7 @@
 # default Python libraries
 import os
 import time
+import threading
 
 # cfclient libraries
 import cflib.crtp
@@ -11,17 +12,23 @@ from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.positioning.position_hl_commander import PositionHlCommander
 from cflib.utils import uri_helper
 
-class drone_thread_class:
-    def __init__(self, master):
+class drone_thread_class(threading.Thread):
+    def __init__(self):
+        super(drone_thread_class, self).__init__()
         # Initialize the low-level drivers (don't list the debug drivers)
         try:
             cflib.crtp.init_drivers(enable_debug_driver=False)
             self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
             self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
-            self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
+            self.pc = PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID)
         except:
             print("Failed to connect to CrazyFlie")
-        
+
+        self.init_drone_board()
+
+    def run(self):
+        while True:
+            time.sleep(0.1)
         
     def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
@@ -45,16 +52,9 @@ class drone_thread_class:
 
             # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
-            self.estimate_drone_position(self.scf)
+            [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
+            self.z_position = 0.15
             drone_board[index - 1] = (self.x_position, self.y_position)
-
-            return drone_board
-
-    def get_URI_ports(self) -> None:
-        cflib.crtp.init_drivers()
-        available = cflib.crtp.scan_interfaces()
-        for i in available:
-            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
 
     def estimate_drone_position(self) -> None:
         cf = self.scf.cf
@@ -87,7 +87,7 @@ class drone_thread_class:
 
     def return_reached_position(self, index):
         threshold = 0.05
-        self.estimate_drone_position(self.scf)
+        [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
 
         if (abs(self.x_position - self.drone_board[index].first) < threshold) and (abs(self.y_position - self.drone_board[index].second) < threshold):
             return True
