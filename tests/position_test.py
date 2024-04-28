@@ -1,4 +1,7 @@
 import time
+import os
+
+import drone
 
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
@@ -9,22 +12,33 @@ from cflib.utils import uri_helper
 # URI to the Crazyflie to connect to
 uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
-def matrix_print(cf, pc):
-
-    pc.go_to(0,0.1,0.15)
-    time.sleep(1)
-    pc.go_to(0,0.2,0.15)
-    time.sleep(3)
-    pc.go_to(0,0.1,0.15)
-
+dr = drone.drone_thread_class()
 
 if __name__ == '__main__':
     cflib.crtp.init_drivers()
 
+    drone_thread = drone.drone_thread_class()
+    drone_thread.name = "drone_thread"
+    drone_thread.daemon = True
+    drone_thread.start()
+
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
-        print("Synced with drone")
+        print("Synced with drone...")
         with PositionHlCommander(scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID) as pc:
-            print("Configured Position Commander")
-            pc.go_to(0,0.1,0.15)
-            time.sleep(3)
-            
+            print("Configured Position Commander...")
+            index = 1
+            while index is not 0:
+                while True:
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print("Please select an index to set: ")
+                    try:
+                        index = int(input())
+                        if index < 0 or index > 9:
+                            raise ValueError #this will send it to the print message and back to the input option
+                        break
+                    except:
+                        print("Not a valid option!")
+                        time.sleep(1)
+                if index is not 0:
+                    drone_thread.set_position(index)
+                

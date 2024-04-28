@@ -38,11 +38,9 @@ class drone_thread_class(threading.Thread):
             with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
                 with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
                     while self.run_states:
-                        pc.go_to(self.x_position, self.y_position, self.z_position)
+                        pc.go_to(self.x_position, self.y_position, self.z_position, 0.25)
                         time.sleep(0.5)
-
-                    
-            
+  
     def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
         self.drone_board = [None] * 9
