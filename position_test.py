@@ -22,12 +22,14 @@ if __name__ == '__main__':
     drone_thread.daemon = True
     runstate = False
     runstate = input()
-    if runstate is True:
+    if runstate == 1:
         drone_thread.start()
     else:
         quit
 
-    while index is not 0:
+    index = 1
+
+    while index != 0:
         os.system('cls' if os.name == 'nt' else 'clear')
         print("Please select an index to set: ")
         try:

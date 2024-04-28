@@ -24,12 +24,9 @@ class drone_thread_class(threading.Thread):
             # Initialize the low-level drivers (don't list the debug drivers)
             cflib.crtp.init_drivers(enable_debug_driver=False)
             self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-            self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
-            self.pc = PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID)
 
             with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as self.scf:
-                with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as self.pc:
-                    self.init_drone_board()
+                self.init_drone_board()
         except:
             print("Failed to connect to CrazyFlie")
 
@@ -47,7 +44,6 @@ class drone_thread_class(threading.Thread):
 
         while len(default_index_set):
             while True:
-                os.system('cls' if os.name == 'nt' else 'clear')
                 print("Please select an index to set: ")
                 print(default_index_set)
                 try:
@@ -60,11 +56,18 @@ class drone_thread_class(threading.Thread):
                 except:
                     print("Not a valid option!")
                     time.sleep(1)
+            print("")
 
             # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
-            [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
-            print(self.pc.get_position())
+            # [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
+
+            self.log_position()
+            self.x_position = self.data[-1]['kalman.varPX']
+            self.y_position = self.data[-1]['kalman.varPY']
+            self.z_position = self.data[-1]['kalman.varPZ']
+
+            print(self.x_position + ", " + self.y_position + ", " + self.z_position)
             self.z_position = Z_HEIGHT
             self.drone_board[index - 1] = (self.x_position, self.y_position)
 
@@ -110,7 +113,10 @@ class drone_thread_class(threading.Thread):
 
     def return_reached_position(self, index):
         threshold = 0.05
-        [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
+        self.log_position()
+        self.x_position = self.data[-1]['kalman.varPX']
+        self.y_position = self.data[-1]['kalman.varPY']
+        self.z_position = self.data[-1]['kalman.varPZ']
 
         if (abs(self.x_position - self.drone_board[index].first) < threshold) and (abs(self.y_position - self.drone_board[index].second) < threshold):
             return True
