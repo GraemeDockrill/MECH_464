@@ -10,10 +10,9 @@ from cflib.utils import uri_helper
 uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
 def matrix_print(cf, pc):
-    time.sleep(3)
 
     pc.go_to(0,0.1,0.15)
-    time.sleep(3)
+    time.sleep(1)
     pc.go_to(0,0.2,0.15)
     time.sleep(3)
     pc.go_to(0,0.1,0.15)
@@ -23,5 +22,9 @@ if __name__ == '__main__':
     cflib.crtp.init_drivers()
 
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+        print("Synced with drone")
         with PositionHlCommander(scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID) as pc:
-            matrix_print(scf.cf, pc)
+            print("Configured Position Commander")
+            pc.go_to(0,0.1,0.15)
+            time.sleep(3)
+            
