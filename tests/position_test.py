@@ -20,7 +20,12 @@ if __name__ == '__main__':
     drone_thread = drone.drone_thread_class()
     drone_thread.name = "drone_thread"
     drone_thread.daemon = True
-    drone_thread.start()
+    runstate = False
+    runstate = input()
+    if runstate is True:
+        drone_thread.start()
+    else:
+        quit
 
     while index is not 0:
         os.system('cls' if os.name == 'nt' else 'clear')

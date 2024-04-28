@@ -64,6 +64,7 @@ class drone_thread_class(threading.Thread):
             # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
             [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
+            print(self.pc.get_position())
             self.z_position = Z_HEIGHT
             self.drone_board[index - 1] = (self.x_position, self.y_position)
 
