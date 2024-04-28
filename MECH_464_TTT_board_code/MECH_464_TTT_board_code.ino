@@ -2,7 +2,7 @@
 
 #define LED_PIN 3
 #define NUM_LEDS 9
-#define BRIGHTNESS 50
+#define BRIGHTNESS 100
 
 CRGB leds[NUM_LEDS];
 
@@ -21,11 +21,8 @@ void loop() {
   if(Serial.available()){
 
     int message = Serial.read();
-    int LED = message & 15;
+    int LED = message & 0b00001111;
     int color = message >> 7;
-
-    Serial.print(LED);
-    Serial.print(color);
 
     // check if LEDs are to be cleared
     if(LED == 9){
@@ -37,13 +34,15 @@ void loop() {
     else{
       // if computer or player color (computer == 1)
       if(color)
-        leds[LED] = CRGB(100, 0, 0);
+        leds[LED] = CRGB(BRIGHTNESS, 0, 0);
       else
-        leds[LED] = CRGB(0, 100, 0);
+        leds[LED] = CRGB(0, BRIGHTNESS, 0);
     }
 
   }
 
   // update LEDs
   FastLED.show();
+
+  delay(10);
 }
