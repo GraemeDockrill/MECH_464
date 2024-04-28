@@ -59,3 +59,24 @@ if __name__ == '__main__':
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
         with PositionHlCommander(scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID) as pc:
             matrix_print(scf.cf, pc)
+
+
+
+   def get_URI_ports(self) -> None:
+        cflib.crtp.init_drivers()
+        available = cflib.crtp.scan_interfaces()
+        for i in available:
+            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
+
+    def init_drone(self) -> None:
+        # Initialize the low-level drivers (don't list the debug drivers)
+        cflib.crtp.init_drivers(enable_debug_driver=False)
+        self.cf = Crazyflie(rw_cache='./cache')
+        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+
+        self.cf.open_link("radio://0/125")
+        self.cf.close_link()
+
+
+    def close_drone(self) -> None:
+        i = 10

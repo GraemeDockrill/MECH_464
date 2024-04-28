@@ -101,6 +101,49 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
+    def get_URI_ports(self) -> None:
+        cflib.crtp.init_drivers()
+        available = cflib.crtp.scan_interfaces()
+        for i in available:
+            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
+
+    def init_drone(self) -> None:
+        # Initialize the low-level drivers (don't list the debug drivers)
+        cflib.crtp.init_drivers(enable_debug_driver=False)
+        self.cf = Crazyflie(rw_cache='./cache')
+        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+
+        self.cf.open_link("radio://0/125")
+        self.cf.close_link()
+
+
+    def close_drone(self) -> None:
+        i = 10
+
+    # Function for restarting the game when it's complete
+    def restart_game(self) -> None:
+
+        # Clear the played set and reset the board
+        self.played.clear()
+        for i in range(9):
+            self.board[i] = " "
+
+        # Disable the restart button
+        self.btn_restart_game.configure(state="disabled")
+
+        # Reenable board buttons
+        self.btn_board_0.configure(text="-", state="active")
+        self.btn_board_1.configure(text="-", state="active")
+        self.btn_board_2.configure(text="-", state="active")
+        self.btn_board_3.configure(text="-", state="active")
+        self.btn_board_4.configure(text="-", state="active")
+        self.btn_board_5.configure(text="-", state="active")
+        self.btn_board_6.configure(text="-", state="active")
+        self.btn_board_7.configure(text="-", state="active")
+        self.btn_board_8.configure(text="-", state="active")
+
+        self.lbl_game_state.configure(text="Make your move")
+
     # Function to handle player button press
     def btn_board_click(self, clicked_button) -> None:
 
