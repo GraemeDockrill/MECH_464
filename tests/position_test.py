@@ -23,20 +23,29 @@ if __name__ == '__main__':
         print("Synced with drone...")
         with PositionHlCommander(scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID) as pc:
             print("Configured Position Commander...")
-            index = 1
-            while index is not 0:
-                while True:
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    print("Please select an index to set: ")
-                    try:
-                        index = int(input())
-                        if index < 0 or index > 9:
-                            raise ValueError #this will send it to the print message and back to the input option
-                        break
-                    except:
-                        print("Not a valid option!")
-                        time.sleep(1)
-                if index is not 0:
-                    drone_thread.set_position(index)
+            while True:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print("Please select an index to set: ")
+                try:
+                    index = int(input())
+                    if index < 1 or index > 9:
+                        raise ValueError #this will send it to the print message and back to the input option
+                    break
+                except:
+                    print("Not a valid option!")
+                    time.sleep(1)
 
-    drone_thread.start()
+            drone_thread.start()
+            while index is not 0:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print("Please select an index to set: ")
+                try:
+                    index = int(input())
+                    if index < 0 or index > 9:
+                        raise ValueError #this will send it to the print message and back to the input option
+                    break
+                except:
+                    print("Not a valid option!")
+                    time.sleep(1)
+                
+                drone_thread.set_position(index)
