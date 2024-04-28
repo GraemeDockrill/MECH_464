@@ -18,6 +18,8 @@ from cflib.utils.multiranger import Multiranger
 from cflib.utils import uri_helper
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
+from cflib.positioning.position_hl_commander import PositionHlCommander
+from cflib.utils import uri_helper
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -110,15 +112,18 @@ class TicTacToeUI:
     def init_drone(self) -> None:
         # Initialize the low-level drivers (don't list the debug drivers)
         cflib.crtp.init_drivers(enable_debug_driver=False)
-        self.cf = Crazyflie(rw_cache='./cache')
         self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
-        self.cf.open_link("radio://0/125")
-        self.cf.close_link()
+        self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
+        
+        self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
 
+            
 
     def close_drone(self) -> None:
-        i = 10
+        self.cf.close_link()
+
+    
 
     # Function for restarting the game when it's complete
     def restart_game(self) -> None:
@@ -447,6 +452,9 @@ if __name__ == "__main__":
     # Initialize tkinter root
     root = tk.Tk()
     root.title("MECH 464 Drone Tic Tac Toe")
+
+    # Initialize playing positions
+
 
     # Create app
     app = TicTacToeUI(root)
