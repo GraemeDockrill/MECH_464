@@ -1,5 +1,5 @@
 # MECH 464 Tic Tac Toe Drone Project
-# Authors: Graeme Dockrill
+# Authors: Graeme Dockrill, Sam Bonnell (to a much lesser extent)
 
 import tkinter as tk
 import serial
@@ -8,6 +8,10 @@ import time
 import struct
 import random
 import logging
+import threading
+
+# Local Classes
+import drone
 
 # Crazyflie Libraries
 import cflib.crtp
@@ -52,6 +56,11 @@ class TicTacToeUI:
 
         # Create UI for game
         self.create_ui()
+
+        self.drone_thread = drone.drone_thread_class()
+        self.drone_thread.name = "drone_thread"
+        self.drone_thread.daemon = True
+        self.drone_thread.start()
 
     # Creates UI for Tic Tac Toe
     def create_ui(self):
@@ -104,7 +113,7 @@ class TicTacToeUI:
             root.grid_rowconfigure(i, weight=1)
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
-            
+
     # Function for restarting the game when it's complete
     def restart_game(self) -> None:
 
@@ -219,12 +228,9 @@ class TicTacToeUI:
         self.board[computer_move] = "X"
 
         # When drove move is selected, make the move
-        """
-            IMPLEMENT
-
-            This is going to be some code that I write!
-
-        """
+        self.drone_thread.go_to_position(computer_move)
+        while not self.drone_thread.return_reached_position(computer_move):
+            time.sleep(0.10)
 
         # When drone reaches target, update buttons on board
         if computer_move == 0:

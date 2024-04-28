@@ -11,20 +11,21 @@ from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.positioning.position_hl_commander import PositionHlCommander
 from cflib.utils import uri_helper
 
-class drone:
+class drone_thread_class:
     def __init__(self, master):
-         self.drone_board = [None] * 9
-
-    def init_drone(self) -> None:
         # Initialize the low-level drivers (don't list the debug drivers)
-        cflib.crtp.init_drivers(enable_debug_driver=False)
-        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-
-        self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
-        self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
-
-    def init_drone_board(self) -> None:
+        try:
+            cflib.crtp.init_drivers(enable_debug_driver=False)
+            self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+            self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
+            self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
+        except:
+            print("Failed to connect to CrazyFlie")
+        
+        
+    def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
+        drone_board = [None] * 9
 
         while len(default_index_set):
             while True:
@@ -45,7 +46,9 @@ class drone:
             # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
             self.estimate_drone_position(self.scf)
-            self.drone_board[index - 1] = (self.x_position, self.y_position)
+            drone_board[index - 1] = (self.x_position, self.y_position)
+
+            return drone_board
 
     def get_URI_ports(self) -> None:
         cflib.crtp.init_drivers()
@@ -81,10 +84,15 @@ class drone:
         y_position = self.drone_board[index].second
         z_position = 0.15
         self.pc.go_to(x_position, y_position, z_position)
-        self.move_flag = True
 
-    def return_reached_position(self):
-        return [self.x_position, self.y_position]
+    def return_reached_position(self, index):
+        threshold = 0.05
+        self.estimate_drone_position(self.scf)
+
+        if (abs(self.x_position - self.drone_board[index].first) < threshold) and (abs(self.y_position - self.drone_board[index].second) < threshold):
+            return True
+        else:
+            return False
 
     def close_drone(self) -> None:
             self.cf.close_link()
