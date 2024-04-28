@@ -21,15 +21,19 @@ class drone_thread_class(threading.Thread):
             self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
             self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
             self.pc = PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID)
+
+            with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as self.scf:
+                with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as self.pc:
+                    self.init_drone_board()
         except:
             print("Failed to connect to CrazyFlie")
 
-        self.init_drone_board()
-
     def run(self):
-        while True:
-            time.sleep(0.1)
-        
+         with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+                with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
+                    pc.go_to(self.x_position, self.y_position, self.z_position)
+                    time.sleep(0.5)
+            
     def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
         drone_board = [None] * 9
@@ -79,11 +83,10 @@ class drone_thread_class(threading.Thread):
                 self.z_position = data['kalman.varPZ']
 
     # Function to move the drone to an index 
-    def go_to_position(self, index) -> None:
-        x_position = self.drone_board[index].first
-        y_position = self.drone_board[index].second
-        z_position = 0.15
-        self.pc.go_to(x_position, y_position, z_position)
+    def set_position(self, index) -> None:
+        self.x_position = self.drone_board[index].first
+        self.y_position = self.drone_board[index].second
+        self.z_position = 0.15
 
     def return_reached_position(self, index):
         threshold = 0.05

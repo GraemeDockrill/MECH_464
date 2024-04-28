@@ -228,7 +228,7 @@ class TicTacToeUI:
         self.board[computer_move] = "X"
 
         # When drove move is selected, make the move
-        self.drone_thread.go_to_position(computer_move)
+        self.drone_thread.set_position(computer_move)
         while not self.drone_thread.return_reached_position(computer_move):
             time.sleep(0.10)
 
