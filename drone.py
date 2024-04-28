@@ -74,12 +74,7 @@ class drone_thread_class(threading.Thread):
         self.z_position = 0
 
     def log_position(self) -> None:
-        cf = self.scf.cf
-        cf.param.set_value('kalman.resetEstimation', '1')
-        time.sleep(0.1)
-        cf.param.set_value('kalman.resetEstimation', '0')
-
-        log_config = LogConfig(name='Kalman Variance', period_in_ms=500)
+        log_config = LogConfig(name='State Estimate', period_in_ms=250)
         log_config.add_variable('stateEstimate.x', 'float')
         log_config.add_variable('stateEstimate.y', 'float')
         log_config.add_variable('stateEstimate.z', 'float')
