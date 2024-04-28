@@ -101,24 +101,24 @@ class TicTacToeUI:
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
 
-    def get_URI_ports(self) -> None:
-        cflib.crtp.init_drivers()
-        available = cflib.crtp.scan_interfaces()
-        for i in available:
-            print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
+    # def get_URI_ports(self) -> None:
+    #     cflib.crtp.init_drivers()
+    #     available = cflib.crtp.scan_interfaces()
+    #     for i in available:
+    #         print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
 
-    def init_drone(self) -> None:
-        # Initialize the low-level drivers (don't list the debug drivers)
-        cflib.crtp.init_drivers(enable_debug_driver=False)
-        self.cf = Crazyflie(rw_cache='./cache')
-        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+    # def init_drone(self) -> None:
+    #     # Initialize the low-level drivers (don't list the debug drivers)
+    #     cflib.crtp.init_drivers(enable_debug_driver=False)
+    #     self.cf = Crazyflie(rw_cache='./cache')
+    #     self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
-        self.cf.open_link("radio://0/125")
-        self.cf.close_link()
+    #     self.cf.open_link("radio://0/125")
+    #     self.cf.close_link()
 
 
-    def close_drone(self) -> None:
-        i = 10
+    # def close_drone(self) -> None:
+    #     i = 10
 
     # Function for restarting the game when it's complete
     def restart_game(self) -> None:
@@ -127,6 +127,9 @@ class TicTacToeUI:
         self.played.clear()
         for i in range(9):
             self.board[i] = " "
+
+        # Reset LEDs on board
+        self.write_to_serial(9, 1)
 
         # Disable the restart button
         self.btn_restart_game.configure(state="disabled")
@@ -150,6 +153,9 @@ class TicTacToeUI:
         # Add clicked button to played list
         self.played.add(clicked_button)
         self.board[clicked_button] = "O"
+
+        # Activate LED on board
+        self.write_to_serial(clicked_button, 0)
 
         print(clicked_button)
 
@@ -221,6 +227,9 @@ class TicTacToeUI:
         # Add drone move
         self.played.add(computer_move)
         self.board[computer_move] = "X"
+
+        # Activate LED on board
+        self.write_to_serial(computer_move, 1)
 
         # When drove move is selected, make the move
         """
@@ -350,7 +359,6 @@ class TicTacToeUI:
         # First check if we're already connected
         if self.COM_connected:
             try:
-                self.serial_port_thread.close()
                 self.btn_connect.config(text="Connect")
                 self.COM_connected = False
                 self.serial_port.close()
@@ -363,7 +371,7 @@ class TicTacToeUI:
                 self.serial_port_option = self.selected_port.get()
                 self.serial_port = serial.Serial(self.serial_port_option, self.baud_rate)
                 # time.sleep(0.1)
-                if self.serial_port_thread.isOpen():
+                if self.serial_port.is_open:
                     self.btn_connect.config(text="Disconnect")
                     self.COM_connected = True
             except Exception as e:
@@ -375,11 +383,23 @@ class TicTacToeUI:
         return self.serial_port.is_open
     
     # Writing to serial port
-    def write_to_serial(self, COM_message):
+    def write_to_serial(self, square, colour):
+
+        # First 4 bits are for the color
+        COM_byte = 0b00000000
+        COM_byte += square
+
+        if colour == 0:
+            COM_byte = COM_byte | 0b00000000
+        else:
+            COM_byte = COM_byte | 0b10000000
+
+
         if self.isOpen:
             try:
-                print("Wrote " + str(COM_message) + " to serial port!")
-                self.serial_port.write(COM_message)     # Write byte array to serial
+                # COM_byte = struct.pack('B', command)
+                print("Wrote " + str(COM_byte) + " to serial port!")
+                self.serial_port.write(COM_byte)     # Write byte array to serial
             except Exception as e:
                 print("Error writing to serial port!")
                 print(e)
