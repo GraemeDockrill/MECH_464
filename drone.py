@@ -34,11 +34,13 @@ class drone_thread_class(threading.Thread):
             print("Failed to connect to CrazyFlie")
 
     def run(self):
-         with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+            self.run_state = True
+            with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
                 with PositionHlCommander(self.scf, controller=PositionHlCommander.CONTROLLER_PID) as pc:
-                    pc.go_to(self.x_position, self.y_position, self.z_position)
-                    time.sleep(0.5)
-            
+                    while self.run_states:
+                        pc.go_to(self.x_position, self.y_position, self.z_position, 0.25)
+                        time.sleep(0.5)
+  
     def init_drone_board(self):
         default_index_set = {1,2,3,4,5,6,7,8,9}
         self.drone_board = [None] * 9
@@ -62,6 +64,7 @@ class drone_thread_class(threading.Thread):
             # Add the current position of the drone into the index of the 
             default_index_set.remove(index)
             [self.x_position, self.y_position, self.z_position] = self.pc.get_position()
+            print(self.pc.get_position())
             self.z_position = Z_HEIGHT
             self.drone_board[index - 1] = (self.x_position, self.y_position)
 
@@ -101,6 +104,9 @@ class drone_thread_class(threading.Thread):
         self.x_position = self.drone_board[index].first
         self.y_position = self.drone_board[index].second
         self.z_position = Z_HEIGHT
+
+    def exit_command(self) -> None:
+        self.run_state = False
 
     def return_reached_position(self, index):
         threshold = 0.05
