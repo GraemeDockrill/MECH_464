@@ -24,9 +24,8 @@ class drone_thread_class(threading.Thread):
             # Initialize the low-level drivers (don't list the debug drivers)
             cflib.crtp.init_drivers(enable_debug_driver=False)
             self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-            self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
-
-            self.init_drone_board()
+            with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as self.scf:
+                self.init_drone_board()
         except:
             print("Failed to connect to CrazyFlie")
 
