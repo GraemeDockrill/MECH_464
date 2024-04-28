@@ -12,15 +12,12 @@ from cflib.utils import uri_helper
 # URI to the Crazyflie to connect to
 uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
-dr = drone.drone_thread_class()
-
 if __name__ == '__main__':
     cflib.crtp.init_drivers()
 
     drone_thread = drone.drone_thread_class()
     drone_thread.name = "drone_thread"
     drone_thread.daemon = True
-    drone_thread.start()
 
     with SyncCrazyflie(uri, cf=Crazyflie(rw_cache='./cache')) as scf:
         print("Synced with drone...")
@@ -41,4 +38,5 @@ if __name__ == '__main__':
                         time.sleep(1)
                 if index is not 0:
                     drone_thread.set_position(index)
-                
+
+    drone_thread.start()
