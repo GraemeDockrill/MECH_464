@@ -104,39 +104,7 @@ class TicTacToeUI:
             root.grid_rowconfigure(i, weight=1)
         for i in range(self.num_columns):
             root.grid_columnconfigure(i, weight=1)
-
-    # def get_URI_ports(self) -> None:
-    #     cflib.crtp.init_drivers()
-    #     available = cflib.crtp.scan_interfaces()
-    #     for i in available:
-    #         print ("Found Crazyflie on URI [%s] with comment [%s]" (available[0], available[1]))
-
-    def init_drone(self) -> None:
-        # Initialize the low-level drivers (don't list the debug drivers)
-        cflib.crtp.init_drivers(enable_debug_driver=False)
-        self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-
-        self.scf = SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache'))
-        
-        self.pc = PositionHlCommander(self.scf, default_height=0.5, controller=PositionHlCommander.CONTROLLER_PID)
-    # def init_drone(self) -> None:
-    #     # Initialize the low-level drivers (don't list the debug drivers)
-    #     cflib.crtp.init_drivers(enable_debug_driver=False)
-    #     self.cf = Crazyflie(rw_cache='./cache')
-    #     self.uri = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-
-    #     self.cf.open_link("radio://0/125")
-    #     self.cf.close_link()
-
             
-
-    def close_drone(self) -> None:
-        self.cf.close_link()
-
-    
-    # def close_drone(self) -> None:
-    #     i = 10
-
     # Function for restarting the game when it's complete
     def restart_game(self) -> None:
 

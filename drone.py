@@ -79,9 +79,12 @@ class drone:
     def go_to_position(self, index) -> None:
         x_position = self.drone_board[index].first
         y_position = self.drone_board[index].second
-        z_position = 0.25
+        z_position = 0.15
         self.pc.go_to(x_position, y_position, z_position)
         self.move_flag = True
+
+    def return_reached_position(self):
+        return [self.x_position, self.y_position]
 
     def close_drone(self) -> None:
             self.cf.close_link()
