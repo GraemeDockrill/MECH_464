@@ -40,6 +40,8 @@ class TicTacToeUI:
         # Define states
         self.COM_connected = False
         self.drone_flying = False
+        self.calibration_done = False
+        self.calibration_count = 0
 
         # Define some variables
         self.num_rows = 8
@@ -63,50 +65,51 @@ class TicTacToeUI:
 
         self.drone_thread = go_to_recorded_position.DroneMovement()
         self.drone_thread.name = "drone_thread"
+        self.drone_thread.daemon = True
         self.drone_thread.start()
 
-        # loop for all tiles
-        while len(self.default_index_set) > 0:
-            # continuously prompt user for input
-            while True:
-                print("Please select an index to set: ")
-                print(self.default_index_set)
-                try:
-                    index = int(input())
-                    if index < 0 or index > 8:
-                        raise ValueError #this will send it to the print message and back to the input option
-                    if index not in self.default_index_set:
-                        raise ValueError
-                    break
-                except:
-                    print("Not a valid option!")
-                    time.sleep(0.25)
-                print("")
+        # # loop for all tiles
+        # while len(self.default_index_set) > 0:
+        #     # continuously prompt user for input
+        #     while True:
+        #         print("Please select an index to set: ")
+        #         print(self.default_index_set)
+        #         try:
+        #             index = int(input())
+        #             if index < 0 or index > 8:
+        #                 raise ValueError #this will send it to the print message and back to the input option
+        #             if index not in self.default_index_set:
+        #                 raise ValueError
+        #             break
+        #         except:
+        #             print("Not a valid option!")
+        #             time.sleep(0.25)
+        #         print("")
 
-            self.default_index_set.remove(index)
-            # record current drone position
-            self.drone_thread.record_tile_position(index)
+        #     self.default_index_set.remove(index)
+        #     # record current drone position
+        #     self.drone_thread.record_tile_position(index)
 
     # Creates UI for Tic Tac Toe
     def create_ui(self):
         # Create Tic Tac Toe board buttons
-        self.btn_board_0 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(0))
+        self.btn_board_0 = tk.Button(self.master, text="1", font=self.custom_button_font, command=lambda: self.btn_board_click(0))
         self.btn_board_0.grid(row=4, column=0, sticky="nsew")
-        self.btn_board_1 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(1))
+        self.btn_board_1 = tk.Button(self.master, text="2", font=self.custom_button_font, command=lambda: self.btn_board_click(1))
         self.btn_board_1.grid(row=4, column=1, sticky="nsew")
-        self.btn_board_2 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(2))
+        self.btn_board_2 = tk.Button(self.master, text="3", font=self.custom_button_font, command=lambda: self.btn_board_click(2))
         self.btn_board_2.grid(row=4, column=2, sticky="nsew")
-        self.btn_board_3 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(3))
+        self.btn_board_3 = tk.Button(self.master, text="4", font=self.custom_button_font, command=lambda: self.btn_board_click(3))
         self.btn_board_3.grid(row=5, column=0, sticky="nsew")
-        self.btn_board_4 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(4))
+        self.btn_board_4 = tk.Button(self.master, text="5", font=self.custom_button_font, command=lambda: self.btn_board_click(4))
         self.btn_board_4.grid(row=5, column=1, sticky="nsew")
-        self.btn_board_5 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(5))
+        self.btn_board_5 = tk.Button(self.master, text="6", font=self.custom_button_font, command=lambda: self.btn_board_click(5))
         self.btn_board_5.grid(row=5, column=2, sticky="nsew")
-        self.btn_board_6 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(6))
+        self.btn_board_6 = tk.Button(self.master, text="7", font=self.custom_button_font, command=lambda: self.btn_board_click(6))
         self.btn_board_6.grid(row=6, column=0, sticky="nsew")
-        self.btn_board_7 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(7))
+        self.btn_board_7 = tk.Button(self.master, text="8", font=self.custom_button_font, command=lambda: self.btn_board_click(7))
         self.btn_board_7.grid(row=6, column=1, sticky="nsew")
-        self.btn_board_8 = tk.Button(self.master, text="-", font=self.custom_button_font, command=lambda: self.btn_board_click(8))
+        self.btn_board_8 = tk.Button(self.master, text="9", font=self.custom_button_font, command=lambda: self.btn_board_click(8))
         self.btn_board_8.grid(row=6, column=2, sticky="nsew")
 
         # Create button for restarting
@@ -118,7 +121,7 @@ class TicTacToeUI:
         self.lbl_title.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         # Create label for game status
-        self.lbl_game_state = tk.Label(self.master, font=self.custom_label_font, text="Make your move")
+        self.lbl_game_state = tk.Label(self.master, font=self.custom_label_font, text="Calibrate board")
         self.lbl_game_state.grid(row=3, column=0, columnspan=3, sticky="nsew")
 
         # Create COM connect button
@@ -173,12 +176,6 @@ class TicTacToeUI:
     # Function to handle player button press
     def btn_board_click(self, clicked_button) -> None:
 
-        # Add clicked button to played list
-        self.played.add(clicked_button)
-        self.board[clicked_button] = "O"
-
-        print(clicked_button)
-
         # Check  which button was clicked and change it's color accordingly
         if clicked_button == 0:
             self.btn_board_0.configure(text="O", state="disabled")
@@ -198,6 +195,39 @@ class TicTacToeUI:
             self.btn_board_7.configure(text="O", state="disabled")
         if clicked_button == 8:
             self.btn_board_8.configure(text="O", state="disabled")
+
+        # check if in calibration sequence
+        if not self.calibration_done:
+
+            # record clicked button
+            self.drone_thread.record_tile_position(clicked_button)
+        
+            # increment the number of calibration
+            self.calibration_count = self.calibration_count + 1
+
+            if self.calibration_count >= 9:
+                # Reenable board buttons
+                self.btn_board_0.configure(text="-", state="active")
+                self.btn_board_1.configure(text="-", state="active")
+                self.btn_board_2.configure(text="-", state="active")
+                self.btn_board_3.configure(text="-", state="active")
+                self.btn_board_4.configure(text="-", state="active")
+                self.btn_board_5.configure(text="-", state="active")
+                self.btn_board_6.configure(text="-", state="active")
+                self.btn_board_7.configure(text="-", state="active")
+                self.btn_board_8.configure(text="-", state="active")
+
+                self.lbl_game_state.configure(text="Make your move")
+
+                self.calibration_done = True
+
+            return
+
+        # Add clicked button to played list
+        self.played.add(clicked_button)
+        self.board[clicked_button] = "O"
+
+        print(clicked_button)
 
         # Handle 3 and 5 being switched on the board
         if (clicked_button == 3):
@@ -490,7 +520,13 @@ class TicTacToeUI:
 
     # Function run when window closed LAND DRONE
     def close_program(self):
+        # Reset LEDs on board
+        self.write_to_serial(9, 1)
+
+        # stop drone
         self.drone_thread.stop_drone()
+        time.sleep(2)
+    
         self.master.destroy()
 
 
