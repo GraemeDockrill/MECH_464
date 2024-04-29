@@ -39,7 +39,7 @@ class DroneMovement(threading.Thread):
         # saved target position index
         self.target_pos_index = 0
 
-        self.target_pos_threshold = 0.2
+        self.target_pos_threshold = 0.10
 
         self.if_run = False
 
@@ -48,19 +48,19 @@ class DroneMovement(threading.Thread):
 
         # infinite loop for control
         while True:
-            print("On-standby")
+            #print("On-standby")
             # check if drone released for movement
             if self.if_run:
-                print("Running")
+                #print("Running")
 
                 try:
                     # connect to drone
                     with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
 
-                        print("Connected to drone")
+                        #print("Connected to drone")
                         # start position commander
-                        with PositionHlCommander(scf , controller=PositionHlCommander.CONTROLLER_PID) as pc:
-                            print("HL commander started")
+                        with PositionHlCommander(scf, default_height=0., controller=PositionHlCommander.CONTROLLER_PID) as pc:
+                            #print("HL commander started")
 
                             time.sleep(1)
 
@@ -74,11 +74,11 @@ class DroneMovement(threading.Thread):
                             # start reading drone memory for lighthouse position
                             with SyncLogger(scf, log_config) as logger:
 
-                                print("Started SyncLogger")
+                                #print("Started SyncLogger")
                                 
                                 # control loop for drone movement
                                 while self.if_run:
-                                    print("Checked for running...")
+                                    #print("Checked for running...")
 
                                     # get current drone position for comparison
                                     # reading through drone data
@@ -92,8 +92,7 @@ class DroneMovement(threading.Thread):
                                         self.y_current_position = data['stateEstimate.y']
 
                                         [x, y] = self.recorded_positions_xy[self.target_pos_index]
-                                        print(str(self.x_current_position) + ", " + str(self.y_current_position))
-                                        print(str(x) + ", " + str(y))
+                                        print("Current Pos: " + str(self.x_current_position) + ", " + str(self.y_current_position) + " | Target Pos:" + str(x) + ", " + str(y))
 
                                         break
 
@@ -121,11 +120,11 @@ class DroneMovement(threading.Thread):
     # function to check if drone reached setpoint
     def target_reached(self) -> bool:
         # check if drone within tolerance to setpoint
-        for x_target, y_target in self.drone_board[self.target_pos_index]:
-            if (abs(self.x_current_position - x_target) < self.target_pos_threshold) and (abs(self.y_current_position - y_target) < self.target_pos_threshold):
-                return True
-            else:
-                return False
+        [x_target, y_target] = self.recorded_positions_xy[self.target_pos_index]
+        if (abs(self.x_current_position - x_target) < self.target_pos_threshold) and (abs(self.y_current_position - y_target) < self.target_pos_threshold):
+            return True
+        else:
+            return False
 
     # function for recording position of drone for corresponding board tile
     def record_tile_position(self, index) -> None:
@@ -218,20 +217,22 @@ if __name__ == '__main__':
     # move to tile 1
     print("Move to tile 1")
     drone_thread.set_drone_tile_target(1)
-    time.sleep(10)
-
-    #while not drone_thread.target_reached():
-    #    time.sleep(0.25) 
+    time.sleep(5)
 
     # move to tile 2
     print("Move to tile 2")
     drone_thread.set_drone_tile_target(2)
-    time.sleep(10)
+    time.sleep(5)
 
     # move to tile 3
     print("Move to tile 3")
     drone_thread.set_drone_tile_target(3)
-    time.sleep(10)
+    time.sleep(5)
+
+    # move to tile 4
+    print("Move to tile 4")
+    drone_thread.set_drone_tile_target(4)
+    time.sleep(5)
 
     # stop drone
     drone_thread.stop_drone()

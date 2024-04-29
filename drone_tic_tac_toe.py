@@ -12,6 +12,7 @@ import threading
 
 # Local Classes
 import drone
+import go_to_recorded_position
 
 # Crazyflie Libraries
 import cflib.crtp
@@ -38,6 +39,7 @@ class TicTacToeUI:
 
         # Define states
         self.COM_connected = False
+        self.drone_flying = False
 
         # Define some variables
         self.num_rows = 8
@@ -57,10 +59,33 @@ class TicTacToeUI:
         # Create UI for game
         self.create_ui()
 
-        self.drone_thread = drone.drone_thread_class()
+        self.default_index_set = {0,1,2,3,4,5,6,7,8}
+
+        self.drone_thread = go_to_recorded_position.DroneMovement()
         self.drone_thread.name = "drone_thread"
-        self.drone_thread.daemon = True
         self.drone_thread.start()
+
+        # loop for all tiles
+        while len(self.default_index_set) > 0:
+            # continuously prompt user for input
+            while True:
+                print("Please select an index to set: ")
+                print(self.default_index_set)
+                try:
+                    index = int(input())
+                    if index < 0 or index > 8:
+                        raise ValueError #this will send it to the print message and back to the input option
+                    if index not in self.default_index_set:
+                        raise ValueError
+                    break
+                except:
+                    print("Not a valid option!")
+                    time.sleep(0.25)
+                print("")
+
+            self.default_index_set.remove(index)
+            # record current drone position
+            self.drone_thread.record_tile_position(index)
 
     # Creates UI for Tic Tac Toe
     def create_ui(self):
@@ -127,6 +152,10 @@ class TicTacToeUI:
 
         # Disable the restart button
         self.btn_restart_game.configure(state="disabled")
+
+        # move drone to board center
+        self.drone_thread.set_drone_tile_target(4)
+        time.sleep(5)
 
         # Reenable board buttons
         self.btn_board_0.configure(text="-", state="active")
@@ -201,6 +230,12 @@ class TicTacToeUI:
     # Function to handle the drone's move and to update the board when the drone move is done
     def computerNextMove(self) -> None:
 
+        # on first boot up, take off with drone
+        if not self.drone_flying:
+            self.drone_flying = True
+            self.drone_thread.start_drone()
+            time.sleep(2)
+
         self.lbl_game_state.configure(text="Drone making a move")
 
         # Disable all buttons when this is happening
@@ -228,9 +263,8 @@ class TicTacToeUI:
         self.board[computer_move] = "X"
 
         # When drove move is selected, make the move
-        self.drone_thread.set_position(computer_move)
-        while not self.drone_thread.return_reached_position(computer_move):
-            time.sleep(0.10)
+        self.drone_thread.set_drone_tile_target(computer_move)
+        time.sleep(5)
 
         # When drone reaches target, update buttons on board
         if computer_move == 0:
@@ -454,8 +488,9 @@ class TicTacToeUI:
     def on_port_selected(self, *args):
         print("Selected port:", self.selected_port.get())
 
-    # Function run when window closed
+    # Function run when window closed LAND DRONE
     def close_program(self):
+        self.drone_thread.stop_drone()
         self.master.destroy()
 
 
