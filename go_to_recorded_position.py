@@ -13,9 +13,6 @@ from cflib.utils import uri_helper
 
 import threading
 
-
-
- 
 class DroneMovement(threading.Thread):
     def __init__(self):
         super(DroneMovement, self).__init__()
@@ -56,57 +53,66 @@ class DroneMovement(threading.Thread):
             if self.if_run:
                 print("Running")
 
-                # connect to drone
-                with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
+                try:
+                    # connect to drone
+                    with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache='./cache')) as scf:
 
-                    print("Connected to drone")
-                    # start position commander
-                    with PositionHlCommander(scf) as pc:
-                        # time.sleep(1)
+                        print("Connected to drone")
+                        # start position commander
+                        with PositionHlCommander(scf , controller=PositionHlCommander.CONTROLLER_PID) as pc:
+                            print("HL commander started")
 
-                        print("HL commander started")
+                            time.sleep(1)
 
-                        # initialize log configuration
-                        log_config = LogConfig(name='State Estimate', period_in_ms=250)
-                        log_config.add_variable('stateEstimate.x', 'float')
-                        log_config.add_variable('stateEstimate.y', 'float')
-                        log_config.add_variable('stateEstimate.z', 'float')
+                            # initialize log configuration
+                            log_config = LogConfig(name='State Estimate', period_in_ms=250)
+                            log_config.add_variable('stateEstimate.x', 'float')
+                            log_config.add_variable('stateEstimate.y', 'float')
+                            log_config.add_variable('stateEstimate.z', 'float')
 
 
-                        # start reading drone memory for lighthouse position
-                        with SyncLogger(scf, log_config) as logger:
+                            # start reading drone memory for lighthouse position
+                            with SyncLogger(scf, log_config) as logger:
 
-                            print("Started SyncLogger")
+                                print("Started SyncLogger")
+                                
+                                # control loop for drone movement
+                                while self.if_run:
+                                    print("Checked for running...")
 
-                            
-                            # control loop for drone movement
-                            while self.if_run:
+                                    # get current drone position for comparison
+                                    # reading through drone data
+                                    for log_entry in logger:
+                                        data = log_entry[1]
 
-                                # get current drone position for comparison
-                                # reading through drone data
-                                for log_entry in logger:
-                                    data = log_entry[1]
+                                        # print('[%d][%s]: %s' % (timestamp, logconf_name, data))
 
-                                    # print('[%d][%s]: %s' % (timestamp, logconf_name, data))
+                                        # add recorded x,y position to array
+                                        self.x_current_position = data['stateEstimate.x']
+                                        self.y_current_position = data['stateEstimate.y']
 
-                                    # add recorded x,y position to array
-                                    self.x_current_position = data['stateEstimate.x']
-                                    self.y_current_position = data['stateEstimate.y']
+                                        [x, y] = self.recorded_positions_xy[self.target_pos_index]
+                                        print(str(self.x_current_position) + ", " + str(self.y_current_position))
+                                        print(str(x) + ", " + str(y))
 
-                                    print(self.x_current_position + ", " + self.y_current_position)
-                                    print(self.self.recorded_positions_xy[self.target_pos_index].first + ", " + self.recorded_positions_xy[self.target_pos_index].second)
+                                        break
 
-                                #logger.next()
+                                    #logger.next()
 
-                                # make drone move (x, y, z, velocity)
-                                pc.go_to(self.recorded_positions_xy[self.target_pos_index].first, self.recorded_positions_xy[self.target_pos_index].second, self.z_target_position, self.set_velocity)
-                                # delay to let drone move
-                                time.sleep(1)
+                                    # make drone move (x, y, z, velocity)
+                                    [x, y] = self.recorded_positions_xy[self.target_pos_index]
+                                    pc.go_to(x, y, self.z_target_position, self.set_velocity)
+                                    # delay to let drone move
+                                    time.sleep(1)
 
-                            # when drone no longer running, land the drone
-                            pc.land()
+                                # when drone no longer running, land the drone
+                                pc.land()
 
-                break
+                    print("Exiting")
+
+                    break
+                except Exception as e:
+                    print(e)
 
             # small time delay
             time.sleep(2)
@@ -115,10 +121,11 @@ class DroneMovement(threading.Thread):
     # function to check if drone reached setpoint
     def target_reached(self) -> bool:
         # check if drone within tolerance to setpoint
-        if (abs(self.x_current_position - self.drone_board[self.target_pos_index].first) < self.target_pos_threshold) and (abs(self.y_current_position - self.drone_board[self.target_pos_index].second) < self.target_pos_threshold):
-            return True
-        else:
-            return False
+        for x_target, y_target in self.drone_board[self.target_pos_index]:
+            if (abs(self.x_current_position - x_target) < self.target_pos_threshold) and (abs(self.y_current_position - y_target) < self.target_pos_threshold):
+                return True
+            else:
+                return False
 
     # function for recording position of drone for corresponding board tile
     def record_tile_position(self, index) -> None:
@@ -142,9 +149,11 @@ class DroneMovement(threading.Thread):
                     print('[%d][%s]: %s' % (timestamp, logconf_name, data))
 
                     # add recorded x,y position to array
-                    self.recorded_positions_xy[index-1] = (data['stateEstimate.x'], data['stateEstimate.y'])
+                    self.recorded_positions_xy[index] = (data['stateEstimate.x'], data['stateEstimate.y'])
 
                     break
+
+        return
 
     # function for choosing drone movement target
     def set_drone_tile_target(self, index) -> None:
@@ -159,7 +168,8 @@ class DroneMovement(threading.Thread):
     def start_drone(self) -> None:
         self.if_run = True
 
-    # function to stop the drone movement
+    # function to stop the drone movement0
+    
     def stop_drone(self) -> None:
         self.if_run = False
 
@@ -167,12 +177,12 @@ class DroneMovement(threading.Thread):
 # main program
 if __name__ == '__main__':
 
-    default_index_set = {1,2,3,4,5,6,7,8,9}
+    default_index_set = {0,1,2,3,4,5,6,7,8}
 
     # create drone thread
     drone_thread = DroneMovement()
     drone_thread.name = "thread_thread_name"
-    drone_thread.daemon = True
+    # drone_thread.daemon = True
     drone_thread.start()
 
     # loop for all tiles
@@ -183,7 +193,7 @@ if __name__ == '__main__':
             print(default_index_set)
             try:
                 index = int(input())
-                if index < 1 or index > 9:
+                if index < 0 or index > 8:
                     raise ValueError #this will send it to the print message and back to the input option
                 if index not in default_index_set:
                     raise ValueError
@@ -201,7 +211,28 @@ if __name__ == '__main__':
     drone_thread.print_recorded_positions_xy()
     
     # start drone
+    print("Drone Take-off")
     drone_thread.start_drone()
-    drone_thread.set_drone_tile_target(0)
-    time.sleep(3)
+    time.sleep(5)
+
+    # move to tile 1
+    print("Move to tile 1")
+    drone_thread.set_drone_tile_target(1)
+    time.sleep(10)
+
+    #while not drone_thread.target_reached():
+    #    time.sleep(0.25) 
+
+    # move to tile 2
+    print("Move to tile 2")
+    drone_thread.set_drone_tile_target(2)
+    time.sleep(10)
+
+    # move to tile 3
+    print("Move to tile 3")
+    drone_thread.set_drone_tile_target(3)
+    time.sleep(10)
+
+    # stop drone
     drone_thread.stop_drone()
+    print("Stopped Succesfully!")
